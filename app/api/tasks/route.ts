@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 export async function GET() {
     const result = await db.select().from(tasksTable);
 
-    return NextResponse.json({ result }, {status: 200})
+    return NextResponse.json({ result }, { status: 200 })
 }
 
 export async function POST(request: Request) {
