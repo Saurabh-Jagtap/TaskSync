@@ -38,9 +38,9 @@ export async function PATCH(request: Request, ctx: RouteContext<'/api/tasks/[id]
         return NextResponse.json({ error: "No fields to update" }, { status: 400 })
     }
 
-    const updatedTask = await db.update(tasksTable).set(updateData).where(eq(tasksTable.id, id)).returning()
+    const [updatedTask] = await db.update(tasksTable).set(updateData).where(eq(tasksTable.id, id)).returning()
 
-    if (updatedTask.length === 0) {
+    if (!updatedTask) {
         return NextResponse.json({ error: "Task not found" }, { status: 404 })
     }
 
