@@ -1,0 +1,3 @@
+ALTER TABLE "projects" DROP CONSTRAINT "projects_userId_users_id_fkey", ADD CONSTRAINT "projects_userId_users_id_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "tasks" DROP CONSTRAINT "tasks_userId_users_id_fkey", ADD CONSTRAINT "tasks_userId_users_id_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE;--> statement-breakpoint
+ALTER TABLE "tasks" DROP CONSTRAINT "tasks_projectId_projects_id_fkey", ADD CONSTRAINT "tasks_projectId_projects_id_fkey" FOREIGN KEY ("projectId") REFERENCES "projects"("id") ON DELETE CASCADE;

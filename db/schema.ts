@@ -11,7 +11,7 @@ export const usersTable = pgTable("users", {
 
 export const projectsTable = pgTable("projects", {
   id: uuid().primaryKey().defaultRandom(),
-  userId: uuid().references(() => usersTable.id),
+  userId: uuid().references(() => usersTable.id, { onDelete: 'cascade' }),
   title: varchar({ length: 255 }).notNull(),
   description: varchar({ length: 255 }).notNull(),
   createdAt: timestamp().defaultNow().notNull(),
@@ -20,8 +20,8 @@ export const projectsTable = pgTable("projects", {
 
 export const tasksTable = pgTable("tasks", {
   id: uuid().primaryKey().defaultRandom(),
-  userId: uuid().references(() => usersTable.id),
-  projectId: uuid().references(() => projectsTable.id),
+  userId: uuid().references(() => usersTable.id, { onDelete: 'cascade' }),
+  projectId: uuid().references(() => projectsTable.id, { onDelete: 'cascade' }),
   title: varchar({ length: 255 }).notNull(),
   description: varchar({ length: 255 }).notNull(),
   // status: varchar({ length: 50 }).notNull(),
