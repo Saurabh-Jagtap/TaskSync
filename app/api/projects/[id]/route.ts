@@ -1,33 +1,8 @@
-import { projectsTable, tasksTable } from "@/db/schema"
+import { projectsTable } from "@/db/schema"
+import { getCurrentUser } from "@/lib/auth/session"
 import { db } from "@/lib/db"
-import { eq } from "drizzle-orm"
+import { and, eq } from "drizzle-orm"
 import { NextResponse } from "next/server"
-
-export async function POST(request: Request, ctx: RouteContext<'/api/projects/[id]'>) {
-    const { title, description } = await request.json()
-    const { id } = await ctx.params
-
-    if (!id) {
-        return NextResponse.json({ error: "No ID found" })
-    }
-
-    if (!title || title.trim() === "" || !description || description.trim() === "") {
-        return NextResponse.json({ error: 'Title and Description are required' }, { status: 400 })
-    }
-
-    const [newTask] = await db.insert(tasksTable).values(
-        {
-            title,
-            description,
-            projectId: id
-        }
-    ).returning();
-
-    if (!newTask) {
-        throw new Error("Task creation failed!")
-    }
-    return Response.json({ message: 'Task created', newTask })
-}
 
 export async function DELETE(request: Request, ctx: RouteContext<'/api/projects/[id]'>) {
     const { id } = await ctx.params
@@ -36,8 +11,22 @@ export async function DELETE(request: Request, ctx: RouteContext<'/api/projects/
         return NextResponse.json({ error: "No ID found" })
     }
 
+    const user = await getCurrentUser();
+
+    if (!user) {
+        return Response.json(
+            { message: "Unauthorized" },
+            { status: 401 }
+        );
+    }
+
     try {
-        const [deletedProject] = await db.delete(projectsTable).where(eq(projectsTable.id, id)).returning()
+        const [deletedProject] = await db.delete(projectsTable).where(
+            and(
+                eq(projectsTable.id, id),
+                eq(projectsTable.userId, user.id)
+            )
+        ).returning()
 
         if (!deletedProject) {
             return NextResponse.json({ error: "Project not found" }, { status: 404 })
@@ -55,13 +44,22 @@ export async function DELETE(request: Request, ctx: RouteContext<'/api/projects/
     }
 }
 
-export async function PATCH(request: Request, ctx: RouteContext<'/api/projects/[id]'>){
-    const {title, description} = await request.json()
+export async function PATCH(request: Request, ctx: RouteContext<'/api/projects/[id]'>) {
+    const { title, description } = await request.json()
 
     const { id } = await ctx.params
 
     if (!id) {
         return NextResponse.json({ error: "No ID found" })
+    }
+
+    const user = await getCurrentUser();
+
+    if (!user) {
+        return Response.json(
+            { message: "Unauthorized" },
+            { status: 401 }
+        );
     }
 
     let updateData: { title?: string, description?: string } = {};
@@ -70,7 +68,7 @@ export async function PATCH(request: Request, ctx: RouteContext<'/api/projects/[
         if (typeof title !== "string" || title.trim() === "") {
             return NextResponse.json({ error: "Invalid title" }, { status: 400 })
         }
-        updateData.title = title 
+        updateData.title = title
     }
 
     if (description !== undefined) {
@@ -81,7 +79,12 @@ export async function PATCH(request: Request, ctx: RouteContext<'/api/projects/[
     }
 
 
-    const [updatedProject] = await db.update(projectsTable).set(updateData).where(eq(projectsTable.id, id)).returning()
+    const [updatedProject] = await db.update(projectsTable).set(updateData).where(
+        and(
+                eq(projectsTable.id, id),
+                eq(projectsTable.userId, user.id)
+            )
+    ).returning()
 
     if (!updatedProject) {
         return NextResponse.json({ error: "Project not found" }, { status: 404 })

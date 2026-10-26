@@ -1,9 +1,19 @@
 import { tasksTable } from "@/db/schema";
+import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: Request, ctx: RouteContext<'/api/tasks/[id]'>) {
+    const user = await getCurrentUser();
+
+    if (!user) {
+        return Response.json(
+            { message: "Unauthorized" },
+            { status: 401 }
+        );
+    }
+
     const { id } = await ctx.params
     const result = await db.select().from(tasksTable).where(eq(tasksTable.id, id));;
 
@@ -11,6 +21,15 @@ export async function GET(request: Request, ctx: RouteContext<'/api/tasks/[id]'>
 }
 
 export async function PATCH(request: Request, ctx: RouteContext<'/api/tasks/[id]'>) {
+    const user = await getCurrentUser();
+
+    if (!user) {
+        return Response.json(
+            { message: "Unauthorized" },
+            { status: 401 }
+        );
+    }
+
     const { id } = await ctx.params
     const { title, description } = await request.json()
     let updateData: { title?: string, description?: string } = {}
@@ -48,6 +67,15 @@ export async function PATCH(request: Request, ctx: RouteContext<'/api/tasks/[id]
 }
 
 export async function DELETE(request: NextRequest, ctx: RouteContext<'/api/tasks/[id]'>) {
+    const user = await getCurrentUser();
+
+    if (!user) {
+        return Response.json(
+            { message: "Unauthorized" },
+            { status: 401 }
+        );
+    }
+
     const { id } = await ctx.params
 
     if (!id) {
