@@ -6,11 +6,8 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import {
     CheckCircle2,
     ClipboardList,
-    Leaf,
     LoaderCircle,
-    Moon,
     Plus,
-    Sun,
 } from "lucide-react";
 
 import type { Project, Task } from "@/db/schema";
@@ -24,6 +21,7 @@ import TaskCreateForm, { type IFormInput } from "../components/tasks/TaskCreateF
 import ProjectCreateDialog from "../components/tasks/ProjectCreateDialog";
 import TaskEditDialog from "../components/tasks/TaskEditDialog";
 import ProjectEditDialog from "../components/tasks/ProjectEditDialog";
+import Navbar from "../components/home/Navbar";
 
 const emptyFormValues: IFormInput = {
     title: "",
@@ -50,7 +48,6 @@ const TasksPage = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [taskCreated, setTaskCreated] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-    const [isDark, setIsDark] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
     const [isUpdating, setIsUpdating] = useState(false);
     const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
@@ -63,10 +60,6 @@ const TasksPage = () => {
     const [isCreatingProject, setIsCreatingProject] = useState(false);
     const [isUpdatingProject, setIsUpdatingProject] = useState(false);
 
-    // Apply the selected theme to the document.
-    useEffect(() => {
-        document.documentElement.classList.toggle("dark", isDark);
-    }, [isDark]);
 
     const onSubmit: SubmitHandler<IFormInput> = async (data) => {
         setIsCreating(true);
@@ -342,39 +335,7 @@ const TasksPage = () => {
         <main className="min-h-screen bg-[#F5F3ED] text-foreground transition-colors duration-300 dark:bg-[#171C19]">
             {/* Navbar */}
             <header className="sticky top-0 z-30 border-b border-border/70 bg-background/90 backdrop-blur-xl">
-                <nav
-                    aria-label="Main navigation"
-                    className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8"
-                >
-                    <a
-                        href="/"
-                        className="group inline-flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
-                        aria-label="TaskSync home"
-                    >
-                        <span className="flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 transition-colors group-hover:bg-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:group-hover:bg-emerald-900">
-                            <Leaf className="size-5" strokeWidth={2.2} />
-                        </span>
-                        <span className="text-lg font-semibold tracking-tight">
-                            TaskSync
-                        </span>
-                    </a>
-
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
-                        title={isDark ? "Switch to light theme" : "Switch to dark theme"}
-                        onClick={() => setIsDark((current) => !current)}
-                        className="size-10 rounded-full border-border bg-background transition-all hover:border-emerald-600/40 hover:bg-emerald-50 dark:hover:bg-emerald-950"
-                    >
-                        {isDark ? (
-                            <Sun className="size-[18px]" />
-                        ) : (
-                            <Moon className="size-[18px]" />
-                        )}
-                    </Button>
-                </nav>
+                <Navbar />
             </header>
 
             {/* Main workspace */}
