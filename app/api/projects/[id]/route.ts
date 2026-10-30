@@ -1,94 +1,152 @@
-import { projectsTable } from "@/db/schema"
-import { getCurrentUser } from "@/lib/auth/session"
-import { db } from "@/lib/db"
-import { and, eq } from "drizzle-orm"
-import { NextResponse } from "next/server"
 
-export async function DELETE(request: Request, ctx: RouteContext<'/api/projects/[id]'>) {
-    const { id } = await ctx.params
+import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/session";
+import { deleteProject, getProjectById, updateProject } from "@/app/features/projects/project.service";
 
-    if (!id) {
-        return NextResponse.json({ error: "No ID found" })
-    }
 
-    const user = await getCurrentUser();
+type RouteContext = {
+    params: Promise<{ id: string }>;
+};
 
-    if (!user) {
-        return Response.json(
-            { message: "Unauthorized" },
-            { status: 401 }
-        );
-    }
-
+export async function GET(_request: Request,context: RouteContext) {
     try {
-        const [deletedProject] = await db.delete(projectsTable).where(
-            and(
-                eq(projectsTable.id, id),
-                eq(projectsTable.userId, user.id)
-            )
-        ).returning()
+        const user = await getCurrentUser();
 
-        if (!deletedProject) {
-            return NextResponse.json({ error: "Project not found" }, { status: 404 })
+        if (!user) {
+            return NextResponse.json(
+                { message: "Unauthorized" },
+                { status: 401 }
+            );
         }
 
-        return NextResponse.json({ message: "Project deleted Successfully!", deletedProject }, { status: 200 })
+        const { id } = await context.params;
+        const project = await getProjectById(id, user.id);
 
-    } catch (error) {
-        console.error("Failed to delete project:", error);
+        if (!project) {
+            return NextResponse.json(
+                { error: "Project not found" },
+                { status: 404 }
+            );
+        }
 
         return NextResponse.json(
-            { error: "Unable to delete project." },
+            { result: [project] },
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("Failed to fetch project:", error);
+
+        return NextResponse.json(
+            { error: "Unable to fetch project." },
             { status: 500 }
         );
     }
 }
 
-export async function PATCH(request: Request, ctx: RouteContext<'/api/projects/[id]'>) {
-    const { title, description } = await request.json()
+export async function PATCH(request: Request,context: RouteContext) {
+    try {
+        const user = await getCurrentUser();
 
-    const { id } = await ctx.params
+        if (!user) {
+            return NextResponse.json(
+                { message: "Unauthorized" },
+                { status: 401 }
+            );
+        }
 
-    if (!id) {
-        return NextResponse.json({ error: "No ID found" })
-    }
+        const { id } = await context.params;
 
-    const user = await getCurrentUser();
+        let body: unknown;
 
-    if (!user) {
-        return Response.json(
-            { message: "Unauthorized" },
-            { status: 401 }
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json(
+                { error: "Invalid JSON body." },
+                { status: 400 }
+            );
+        }
+
+        if (typeof body !== "object" || body === null) {
+            return NextResponse.json(
+                { error: "Invalid request body." },
+                { status: 400 }
+            );
+        }
+
+        const { title, description } = body as {
+            title?: unknown;
+            description?: unknown;
+        };
+
+        const updateData: {title?: string;description?: string} = {};
+
+        if (title !== undefined) {
+            if (typeof title !== "string" || !title.trim()) {
+                return NextResponse.json({ error: "Invalid title" },{ status: 400 });
+            }
+
+            updateData.title = title.trim();
+        }
+
+        if (description !== undefined) {
+            if (typeof description !== "string" ||!description.trim()) {
+                return NextResponse.json({ error: "Invalid description" },{ status: 400 });
+            }
+
+            updateData.description = description.trim();
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return NextResponse.json(
+                { error: "No fields to update" },
+                { status: 400 }
+            );
+        }
+
+        const updatedProject = await updateProject(id,user.id,updateData);
+
+        if (!updatedProject) {
+            return NextResponse.json(
+                { error: "Project not found" },
+                { status: 404 }
+            );
+        }
+
+        return NextResponse.json({message: "Project updated Successfully!",updatedProject,},{ status: 200 }
         );
+    } catch (error) {
+        console.error("Failed to update project:", error);
+
+        return NextResponse.json({ error: "Unable to update project." },{ status: 500 });
     }
+}
 
-    let updateData: { title?: string, description?: string } = {};
+export async function DELETE(_request: Request,context: RouteContext) {
+    try {
+        const user = await getCurrentUser();
 
-    if (title !== undefined) {
-        if (typeof title !== "string" || title.trim() === "") {
-            return NextResponse.json({ error: "Invalid title" }, { status: 400 })
+        if (!user) {
+            return NextResponse.json(
+                { message: "Unauthorized" },
+                { status: 401 }
+            );
         }
-        updateData.title = title
-    }
 
-    if (description !== undefined) {
-        if (typeof description !== "string" || description.trim() === "") {
-            return NextResponse.json({ error: "Invalid description" }, { status: 400 })
+        const { id } = await context.params;
+        const deletedProject = await deleteProject(id, user.id);
+
+        if (!deletedProject) {
+            return NextResponse.json(
+                { error: "Project not found" },
+                { status: 404 }
+            );
         }
-        updateData.description = description
+
+        return NextResponse.json({message: "Project deleted Successfully!",deletedProject},{ status: 200 });
+    } catch (error) {
+        console.error("Failed to delete project:", error);
+
+        return NextResponse.json({ error: "Unable to delete project." },{ status: 500 });
     }
-
-
-    const [updatedProject] = await db.update(projectsTable).set(updateData).where(
-        and(
-                eq(projectsTable.id, id),
-                eq(projectsTable.userId, user.id)
-            )
-    ).returning()
-
-    if (!updatedProject) {
-        return NextResponse.json({ error: "Project not found" }, { status: 404 })
-    }
-
-    return NextResponse.json({ message: "Project updated Successfully!", updatedProject }, { status: 200 })
 }

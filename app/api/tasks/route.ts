@@ -1,53 +1,102 @@
-import { tasksTable } from "@/db/schema";
-import { getCurrentUser } from "@/lib/auth/session";
-import { db } from "@/lib/db";
-import { eq } from "drizzle-orm";
+
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth/session";
+import { createTask, getTasksByUserId } from "@/app/features/tasks/task.service";
 
 export async function GET() {
-    const user = await getCurrentUser();
+    try {
+        const user = await getCurrentUser();
 
-    if (!user) {
-        return Response.json(
-            { message: "Unauthorized" },
-            { status: 401 }
+        if (!user) {
+            return NextResponse.json(
+                { message: "Unauthorized" },
+                { status: 401 }
+            );
+        }
+
+        const result = await getTasksByUserId(user.id);
+
+        return NextResponse.json({ result }, { status: 200 });
+    } catch (error) {
+        console.error("Failed to fetch tasks:", error);
+
+        return NextResponse.json(
+            { error: "Unable to fetch tasks." },
+            { status: 500 }
         );
     }
-
-    const result = await db
-        .select()
-        .from(tasksTable)
-        .where(eq(tasksTable.userId, user.id));
-
-    return NextResponse.json({ result }, { status: 200 })
 }
 
 export async function POST(request: Request) {
-    const { title, description } = await request.json()
+    try {
+        const user = await getCurrentUser();
 
-    if (!title || title.trim() === "" || !description || description.trim() === "") {
-        return NextResponse.json({ error: 'Title and Description are required' }, { status: 400 })
-    }
+        if (!user) {
+            return NextResponse.json(
+                { message: "Unauthorized" },
+                { status: 401 }
+            );
+        }
 
-    const user = await getCurrentUser();
+        let body: unknown;
 
-    if (!user) {
-        return Response.json(
-            { message: "Unauthorized" },
-            { status: 401 }
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json(
+                { error: "Invalid JSON body." },
+                { status: 400 }
+            );
+        }
+
+        if (
+            typeof body !== "object" ||
+            body === null ||
+            !("title" in body) ||
+            !("description" in body)
+        ) {
+            return NextResponse.json(
+                { error: "Title and Description are required." },
+                { status: 400 }
+            );
+        }
+
+        const { title, description } = body;
+
+        if (
+            typeof title !== "string" ||
+            title.trim() === "" ||
+            typeof description !== "string" ||
+            description.trim() === ""
+        ) {
+            return NextResponse.json(
+                { error: "Title and Description are required." },
+                { status: 400 }
+            );
+        }
+
+        const newTask = await createTask(user.id, {
+            title: title.trim(),
+            description: description.trim(),
+        });
+
+        if (!newTask) {
+            return NextResponse.json(
+                { error: "Task creation failed." },
+                { status: 500 }
+            );
+        }
+
+        return NextResponse.json(
+            { message: "Task created", newTask },
+            { status: 200 }
+        );
+    } catch (error) {
+        console.error("Failed to create task:", error);
+
+        return NextResponse.json(
+            { error: "Unable to create task." },
+            { status: 500 }
         );
     }
-
-    const [newTask] = await db.insert(tasksTable).values(
-        {
-            userId: user.id,
-            title,
-            description
-        }
-    ).returning();
-
-    if (!newTask) {
-        throw new Error("Task creation failed!")
-    }
-    return Response.json({ message: 'Task created', newTask })
 }
