@@ -1,7 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
-import { deleteProject, getProjectById, updateProject } from "@/app/features/projects/project.service";
+import { deleteProject, getProjectById, updateProject } from "@/features/projects/project.service";
 
 
 type RouteContext = {

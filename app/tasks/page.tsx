@@ -15,12 +15,12 @@ import type { Project, Task } from "@/db/schema";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-import ProjectCard from "../components/tasks/ProjectCard";
-import TaskRow from "../components/tasks/TaskRow";
-import TaskCreateForm, { type IFormInput } from "../components/tasks/TaskCreateForm";
-import ProjectCreateDialog from "../components/tasks/ProjectCreateDialog";
-import TaskEditDialog from "../components/tasks/TaskEditDialog";
-import ProjectEditDialog from "../components/tasks/ProjectEditDialog";
+import ProjectCard from "../../features/projects/components/ProjectCard";
+import TaskRow from "../../features/tasks/components/TaskRow";
+import TaskCreateForm, { type IFormInput } from "../../features/tasks/components/TaskCreateForm";
+import ProjectCreateDialog from "../../features/projects/components/ProjectCreateDialog";
+import TaskEditDialog from "../../features/tasks/components/TaskEditDialog";
+import ProjectEditDialog from "../../features/projects/components/ProjectEditDialog";
 import Navbar from "../components/home/Navbar";
 
 const emptyFormValues: IFormInput = {

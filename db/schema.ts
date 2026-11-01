@@ -38,6 +38,15 @@ export const tasksTable = pgTable("tasks", {
   updatedAt: timestamp().defaultNow().notNull(),
 });
 
+export const commentsTable = pgTable("comments", {
+  id: uuid().primaryKey().defaultRandom(),
+  userId: uuid().references(() => usersTable.id, { onDelete: 'cascade' }),
+  taskId: uuid().references(() => tasksTable.id, { onDelete: 'cascade' }),
+  content: varchar({ length: 255 }).notNull(),
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow().notNull(),
+})
+
 export type User = typeof usersTable.$inferSelect;
 export type NewUser = typeof usersTable.$inferInsert;
 
@@ -50,14 +59,17 @@ export type NewTask = typeof tasksTable.$inferInsert;
 export type Project = typeof projectsTable.$inferSelect;
 export type NewProject = typeof projectsTable.$inferInsert;
 
+export type Comment = typeof commentsTable.$inferSelect;
+export type NewComment = typeof commentsTable.$inferInsert;
 
 export const relations = defineRelations(
-  { usersTable, projectsTable, tasksTable, sessionsTable },
+  { usersTable, projectsTable, tasksTable, sessionsTable, commentsTable },
   (r) => ({
     usersTable: {
       tasks: r.many.tasksTable(),
       projects: r.many.projectsTable(),
       sessions: r.many.sessionsTable(),
+      comments: r.many.commentsTable(),
     },
 
     sessionsTable: {
@@ -85,5 +97,17 @@ export const relations = defineRelations(
         to: r.projectsTable.id,
       }),
     },
+
+    commentsTable: {
+      user: r.one.usersTable({
+        from: r.commentsTable.userId,
+        to: r.usersTable.id,
+      }),
+      task: r.one.tasksTable({
+        from: r.commentsTable.taskId,
+        to: r.tasksTable.id,
+      }),
+    },
+
   })
 );

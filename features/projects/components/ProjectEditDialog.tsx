@@ -18,7 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { IFormInput } from "./TaskCreateForm";
+import { IFormInput } from "../../tasks/components/TaskCreateForm";
 
 interface ProjectEditDialogProps {
   open: boolean;

@@ -1,7 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
-import { createTask, getTasksByUserId } from "@/app/features/tasks/task.service";
+import { createTask, getTasksByUserId } from "@/features/tasks/task.service";
 
 export async function GET() {
     try {

@@ -1,7 +1,8 @@
 
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
-import { createProject, getProjectsByUserId } from "@/app/features/projects/project.service";
+import { createProject, getProjectsByUserId } from "@/features/projects/project.service";
+
 
 export async function GET() {
   try {

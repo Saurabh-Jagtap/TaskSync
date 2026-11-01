@@ -41,10 +41,7 @@ export const createSession = async (userId: string) => {
   return { token, expiresAt };
 };
 
-export const setSessionCookie = async (
-  token: string,
-  expiresAt: Date
-) => {
+export const setSessionCookie = async (token: string,expiresAt: Date) => {
   const cookieStore = await cookies();
 
   cookieStore.set("session", token, {
