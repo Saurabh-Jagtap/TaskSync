@@ -2,6 +2,7 @@
 import {
   ClipboardList,
   LoaderCircle,
+  MessageSquare,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -25,6 +26,7 @@ interface TaskRowProps {
   showSeparator: boolean;
   onEdit: (task: Task) => void;
   onDelete: (id: string) => void;
+  onViewComments: (task: Task) => void;
 }
 
 const TaskRow = ({
@@ -33,6 +35,7 @@ const TaskRow = ({
   showSeparator,
   onEdit,
   onDelete,
+  onViewComments,
 }: TaskRowProps) => {
   return (
     <div>
@@ -71,6 +74,16 @@ const TaskRow = ({
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem
+              onClick={() => onViewComments(task)}
+              className="cursor-pointer"
+            >
+              <MessageSquare className="mr-2 size-4" />
+              Comments
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
             <DropdownMenuItem
               onClick={() => onEdit(task)}
               className="cursor-pointer"

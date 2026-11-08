@@ -22,6 +22,7 @@ import ProjectCreateDialog from "../../features/projects/components/ProjectCreat
 import TaskEditDialog from "../../features/tasks/components/TaskEditDialog";
 import ProjectEditDialog from "../../features/projects/components/ProjectEditDialog";
 import Navbar from "../components/home/Navbar";
+import TaskCommentsPanel from "../../features/comments/components/TaskCommentsPanel";
 
 const emptyFormValues: IFormInput = {
     title: "",
@@ -59,6 +60,8 @@ const TasksPage = () => {
     const [deletingProjectId, setDeletingProjectId] = useState<string | null>(null);
     const [isCreatingProject, setIsCreatingProject] = useState(false);
     const [isUpdatingProject, setIsUpdatingProject] = useState(false);
+
+    const [commentPanelTask, setCommentPanelTask] = useState<Task | null>(null);
 
 
     const onSubmit: SubmitHandler<IFormInput> = async (data) => {
@@ -459,6 +462,7 @@ const TasksPage = () => {
                                     showSeparator={index < tasks.length - 1}
                                     onEdit={handleEditTask}
                                     onDelete={handleDeleteTask}
+                                    onViewComments={setCommentPanelTask}
                                 />
                             ))}
                         </div>
@@ -514,6 +518,16 @@ const TasksPage = () => {
                 form={editProjectForm}
                 onSubmit={handleUpdateProject}
                 isUpdating={isUpdatingProject}
+            />
+
+            {/* Task Comments panel */}
+
+            <TaskCommentsPanel
+                open={commentPanelTask !== null}
+                task={commentPanelTask}
+                onOpenChange={(open) => {
+                    if (!open) setCommentPanelTask(null);
+                }}
             />
 
         </main>

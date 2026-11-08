@@ -1,0 +1,12 @@
+﻿.next/dev/types/validator.ts(107,39): error TS2306: File 'E:/Backend_Practice/Cohort-2026/task-sync/app/api/auth/me/route.ts' is not a module.
+components/ui/spinner.tsx(6,6): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: RemixiconProps, context?: any): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.
+    Type '{ suppressHydrationWarning?: boolean | undefined; color?: string | undefined; height?: string | number | undefined; id?: string | undefined; lang?: string | undefined; max?: string | number | undefined; ... 482 more ...; className: string; }' is not assignable to type 'RemixiconProps'.
+      Types of property 'children' are incompatible.
+        Type 'ReactNode' is not assignable to type 'undefined'.
+          Type 'null' is not assignable to type 'undefined'.
+  Overload 2 of 2, '(props: RemixiconProps): string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | ... 4 more ... | undefined', gave the following error.
+    Type '{ suppressHydrationWarning?: boolean | undefined; color?: string | undefined; height?: string | number | undefined; id?: string | undefined; lang?: string | undefined; max?: string | number | undefined; ... 482 more ...; className: string; }' is not assignable to type 'RemixiconProps'.
+      Types of property 'children' are incompatible.
+        Type 'ReactNode' is not assignable to type 'undefined'.
+          Type 'null' is not assignable to type 'undefined'.
