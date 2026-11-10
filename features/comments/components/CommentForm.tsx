@@ -1,8 +1,9 @@
 
+"use client";
+
+import { useEffect } from "react";
 import { LoaderCircle, MessageSquarePlus, Check } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
-import { useEffect } from "react";
-import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,18 +29,32 @@ const CommentForm = ({
     submitLabel = "Add comment",
     onCancel,
 }: CommentFormProps) => {
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentFormValues>({
+    const {
+        register,
+        handleSubmit,
+        reset,
+        formState: { errors },
+    } = useForm<CommentFormValues>({
         defaultValues: { content: defaultValue },
-        reValidate: "onChange",
         mode: "onBlur",
+        reValidateMode: "onChange",
     });
 
-    // Sync defaultValue into the form when it changes (e.g. when editing different comments).
     useEffect(() => {
         reset({ content: defaultValue });
     }, [defaultValue, reset]);
 
     const isEditMode = Boolean(onCancel);
+
+    const handleFormSubmit: SubmitHandler<CommentFormValues> = async ({
+        content,
+    }) => {
+        await onSubmit(content.trim());
+
+        if (!isEditMode) {
+            reset({ content: "" });
+        }
+    };
 
     return (
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-2">
@@ -52,12 +67,13 @@ const CommentForm = ({
                 className="resize-y border-border/90 bg-background shadow-none placeholder:text-muted-foreground/80 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20 dark:focus-visible:border-emerald-400 dark:focus-visible:ring-emerald-400/20"
                 {...register("content", {
                     required: "Comment cannot be empty",
-                    validate: (v) =>
-                        v.trim().length > 0 || "Comment cannot be empty",
-                        maxLength: 255,
-                        shouldValidate: "",
-                        validate: (value) =>
-                            value?.length > 255 ? "Comment cannot be longer than 255 characters" : value?.trim() ? "" : "Comment cannot be empty",
+                    maxLength: {
+                        value: 255,
+                        message: "Comment cannot exceed 255 characters",
+                    },
+                    validate: (value) =>
+                        value.trim().length > 0 ||
+                        "Comment cannot be empty",
                 })}
             />
 
@@ -94,6 +110,7 @@ const CommentForm = ({
                     ) : (
                         <MessageSquarePlus className="mr-1.5 size-3.5" />
                     )}
+
                     {isSubmitting
                         ? isEditMode
                             ? "Saving..."

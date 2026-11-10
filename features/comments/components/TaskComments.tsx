@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { CommentFromApi } from "@/comments/types";
-
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -11,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import CommentForm from "./CommentForm";
 import CommentItem from "./CommentItem";
+import { CommentFromApi } from "../types";
 
 interface TaskCommentsProps {
   taskId: string;
@@ -44,6 +43,7 @@ const TaskComments = ({ taskId, onCommentSummaryChange }: TaskCommentsProps) => 
       const seq = requestSeqRef.current;
 
       abortControllerRef.current?.abort();
+
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
@@ -52,6 +52,7 @@ const TaskComments = ({ taskId, onCommentSummaryChange }: TaskCommentsProps) => 
       } else {
         setIsLoadingMore(true);
       }
+
       setError(null);
 
       try {
@@ -80,11 +81,25 @@ const TaskComments = ({ taskId, onCommentSummaryChange }: TaskCommentsProps) => 
           setOffset(data.pagination.offset);
           setHasMore(data.pagination.hasMore);
           setTotalCount(data.pagination.total);
-          notifySummaryChange();
+
+          const latestComment = pageComments[0] ?? null;
+
+          onCommentSummaryChange?.(
+            taskId,
+            data.pagination.total,
+            latestComment
+              ? {
+                id: latestComment.id,
+                content: latestComment.content,
+                createdAt: latestComment.createdAt,
+              }
+              : null
+          );
         }
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
         if (seq !== requestSeqRef.current) return;
+
         setError(
           err instanceof Error ? err.message : "Unable to load comments."
         );
@@ -98,7 +113,7 @@ const TaskComments = ({ taskId, onCommentSummaryChange }: TaskCommentsProps) => 
         }
       }
     },
-    [taskId]
+    [taskId, onCommentSummaryChange]
   );
 
   useEffect(() => {
@@ -117,17 +132,6 @@ const TaskComments = ({ taskId, onCommentSummaryChange }: TaskCommentsProps) => 
     setHasMore(false);
     setComments([]);
   }, [taskId]);
-
-  const notifySummaryChange = useCallback(() => {
-    const latest = comments.length > 0 ? comments[0] : null;
-    onCommentSummaryChange?.(
-      taskId,
-      totalCount,
-      latest
-        ? { id: latest.id, content: latest.content, createdAt: latest.createdAt }
-        : null
-    );
-  }, [taskId, totalCount, comments, onCommentSummaryChange]);
 
   const handleLoadMore = async () => {
     if (isLoadingMore || !hasMore) return;
@@ -151,8 +155,9 @@ const TaskComments = ({ taskId, onCommentSummaryChange }: TaskCommentsProps) => 
         throw new Error(data.error || "Unable to add comment.");
       }
 
-      setComments((prev) => [data.result as Comment, ...prev]);
-      notifySummaryChange();
+      const newComment = data.result as CommentFromApi;
+
+      setComments((prev) => [newComment, ...prev]);
       await fetchComments(0, false);
     } catch (err) {
       setError(
@@ -182,8 +187,12 @@ const TaskComments = ({ taskId, onCommentSummaryChange }: TaskCommentsProps) => 
         throw new Error(data.error || "Unable to update comment.");
       }
 
+      const updatedComment = data.result as CommentFromApi;
+
       setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? (data.result as Comment) : c))
+        prev.map((comment) =>
+          comment.id === commentId ? updatedComment : comment
+        )
       );
     } catch (err) {
       setError(

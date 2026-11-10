@@ -112,24 +112,24 @@ export async function getTasksWithCommentSummary(userId: string) {
     .groupBy(commentsTable.taskId);
 
   const rankedCommentsCte = db
-    .$with("ranked_comments")
-    .as(
-      db
-        .select({
-          id: commentsTable.id,
-          taskId: commentsTable.taskId,
-          content: commentsTable.content,
-          createdAt: commentsTable.createdAt,
-          rn: sql<number>`
-            ROW_NUMBER() OVER (
-              PARTITION BY ${commentsTable.taskId}
-              ORDER BY ${desc(commentsTable.createdAt)}, ${desc(commentsTable.id)}
-            )
-          `,
-        })
-        .from(commentsTable)
-        .where(inArray(commentsTable.taskId, taskIds))
-    );
+  .$with("ranked_comments")
+  .as(
+    db
+      .select({
+        id: commentsTable.id,
+        taskId: commentsTable.taskId,
+        content: commentsTable.content,
+        createdAt: commentsTable.createdAt,
+        rn: sql<number>`
+          ROW_NUMBER() OVER (
+            PARTITION BY ${commentsTable.taskId}
+            ORDER BY ${desc(commentsTable.createdAt)}, ${desc(commentsTable.id)}
+          )
+        `.as("rn"),
+      })
+      .from(commentsTable)
+      .where(inArray(commentsTable.taskId, taskIds))
+  );
 
   const latestComments = await db
     .with(rankedCommentsCte)

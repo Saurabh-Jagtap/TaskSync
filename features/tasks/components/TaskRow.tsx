@@ -1,7 +1,13 @@
 import type { TaskWithCommentSummary } from "@/features/tasks/types";
 import { useState } from "react";
 
-import { ClipboardList, MoreHorizontal, MessageSquare, Pencil, Trash2 } from "lucide-react";
+import {
+  ClipboardList,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  ChevronUp,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -30,6 +36,7 @@ const TaskRow = ({
   showSeparator,
   onEdit,
   onDelete,
+  onCommentSummaryChange,
 }: TaskRowProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -37,49 +44,87 @@ const TaskRow = ({
     setIsExpanded((prev) => !prev);
   };
 
-  const triggerAriaLabel = isExpanded ? "Collapse comments" : "Expand comments";
-
   return (
     <div>
       <article className="group flex min-w-0 items-start gap-3 px-3 py-4 transition-colors hover:bg-emerald-50/60 sm:items-center sm:gap-4 sm:px-5 dark:hover:bg-emerald-950/25">
-        <span className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground transition-colors group-hover:bg-emerald-100 group-hover:text-emerald-800 sm:mt-0 dark:group-hover:bg-emerald-900/70 dark:group-hover:text-emerald-200">
-          <ClipboardList className="size-[17px]" />
-        </span>
 
-        <div className="min-w-0 flex-1 space-y-1">
-          <h3 className="break-words text-sm font-medium leading-5 text-foreground sm:text-[15px]">
-            {task.title}
-          </h3>
+        {/* Clickable task content */}
+        <button
+          type="button"
+          onClick={toggleExpand}
+          aria-expanded={isExpanded}
+          aria-controls={`task-comments-${task.id}`}
+          aria-label={`${isExpanded ? "Collapse" : "Expand"} comments for ${task.title}`}
+          className="flex min-w-0 flex-1 items-start gap-3 text-left sm:items-center sm:gap-4"
+        >
+          <span className="mt-1 flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted/70 text-muted-foreground transition-colors group-hover:bg-emerald-100 group-hover:text-emerald-800 sm:mt-0 dark:group-hover:bg-emerald-900/70 dark:group-hover:text-emerald-200">
+            <ClipboardList className="size-[17px]" />
+          </span>
 
-          <p className="break-words text-sm leading-5 text-muted-foreground">
-            {task.description || "No description provided."}
-          </p>
-        </div>
+          <div className="min-w-0 flex-1 space-y-1">
+            <h3 className="break-words text-sm font-medium leading-5 text-foreground sm:text-[15px]">
+              {task.title}
+            </h3>
 
-        {/* Comment count and latest comment preview */}
-        <div className="hidden sm:block sm:ml-6">
-          {task.commentCount > 0 ? (
-            <div className="text-xs text-muted-foreground">
-              <span>{task.commentCount} comment{task.commentCount > 1 ? "s" : ""}</span>
-            </div>
-          ) : (
-            <span className="text-xs text-muted-foreground">No comments</span>
-          )}
-
-          {task.latestComment && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {task.latestComment.content.length > 50
-                ? `${task.latestComment.content.substring(0, 50)}...`
-                : task.latestComment.content}
-              <span className="ml-2 text-[10px] opacity-60">
-                {formatDistanceToNow(new Date(task.latestComment.createdAt), {
-                  addSuffix: true,
-                })}
-              </span>
+            <p className="break-words text-sm leading-5 text-muted-foreground">
+              {task.description || "No description provided."}
             </p>
-          )}
-        </div>
 
+            {/* Mobile comment summary */}
+            <div className="text-xs text-muted-foreground sm:hidden">
+              {task.commentCount > 0
+                ? `${task.commentCount} ${task.commentCount === 1 ? "comment" : "comments"}`
+                : "No comments"}
+            </div>
+          </div>
+
+          {/* Desktop comment summary */}
+          <div className="hidden sm:block sm:ml-6">
+            {task.commentCount > 0 ? (
+              <div className="text-xs text-muted-foreground">
+                <span>
+                  {task.commentCount} comment
+                  {task.commentCount > 1 ? "s" : ""}
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                No comments
+              </span>
+            )}
+
+            {task.latestComment && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {task.latestComment.content.length > 50
+                  ? `${task.latestComment.content.substring(0, 50)}...`
+                  : task.latestComment.content}
+
+                <span className="ml-2 text-[10px] opacity-60">
+                  {formatDistanceToNow(
+                    new Date(task.latestComment.createdAt),
+                    { addSuffix: true }
+                  )}
+                </span>
+              </p>
+            )}
+          </div>
+        </button>
+
+        {/* Collapse button — visible only when expanded */}
+        {isExpanded && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Collapse comments"
+            onClick={toggleExpand}
+            className="size-9 shrink-0 rounded-lg text-muted-foreground hover:bg-emerald-100 hover:text-emerald-900 dark:hover:bg-emerald-900/60 dark:hover:text-emerald-100"
+          >
+            <ChevronUp className="size-5" />
+          </Button>
+        )}
+
+        {/* Task actions */}
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -87,26 +132,15 @@ const TaskRow = ({
                 type="button"
                 variant="ghost"
                 size="icon"
-                aria-label={triggerAriaLabel}
+                aria-label="Task actions"
                 className="size-9 shrink-0 rounded-lg text-muted-foreground opacity-100 transition-colors hover:bg-emerald-100 hover:text-emerald-900 sm:opacity-70 sm:group-hover:opacity-100 dark:hover:bg-emerald-900/60 dark:hover:text-emerald-100"
               >
                 <MoreHorizontal className="size-5" />
               </Button>
             }
-          >
-          </DropdownMenuTrigger>
+          />
 
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem
-              onClick={toggleExpand}
-              className="cursor-pointer"
-            >
-              <MessageSquare className="mr-2 size-4" />
-              {isExpanded ? "Collapse comments" : "Expand comments"}
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
             <DropdownMenuItem
               onClick={() => onEdit(task)}
               className="cursor-pointer"
@@ -131,12 +165,18 @@ const TaskRow = ({
       </article>
 
       {isExpanded && (
-        <TaskComments taskId={task.id} onCommentSummaryChange={onCommentSummaryChange} />
+        <div id={`task-comments-${task.id}`}>
+          <TaskComments
+            taskId={task.id}
+            onCommentSummaryChange={onCommentSummaryChange}
+          />
+        </div>
       )}
 
       {showSeparator && <Separator className="bg-border/70" />}
     </div>
   );
+
 };
 
 export default TaskRow;

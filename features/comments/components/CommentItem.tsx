@@ -3,7 +3,7 @@ import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { LoaderCircle, MessageSquare, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
-import type { Comment } from "@/db/schema";
+import type { CommentFromApi } from "../types";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -17,7 +17,7 @@ import {
 import CommentForm from "./CommentForm";
 
 interface CommentItemProps {
-    comment: Comment;
+    comment: CommentFromApi;
     isDeleting: boolean;
     isUpdating: boolean;
     showSeparator: boolean;

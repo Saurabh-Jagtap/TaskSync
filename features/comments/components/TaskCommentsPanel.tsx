@@ -4,7 +4,8 @@
 import { useEffect, useState } from "react";
 import { MessageSquare } from "lucide-react";
 
-import type { Comment, Task } from "@/db/schema";
+import type { Task } from "@/db/schema";
+import type { CommentFromApi } from "../types";
 
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,7 +28,7 @@ interface TaskCommentsPanelProps {
 }
 
 const TaskCommentsPanel = ({ open, task, onOpenChange }: TaskCommentsPanelProps) => {
-    const [comments, setComments] = useState<Comment[]>([]);
+    const [comments, setComments] = useState<CommentFromApi[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
     const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
@@ -51,7 +52,7 @@ const TaskCommentsPanel = ({ open, task, onOpenChange }: TaskCommentsPanelProps)
                 if (!res.ok) throw new Error("Unable to load comments.");
                 return res.json();
             })
-            .then((data: { result: Comment[] }) => {
+            .then((data: { result: CommentFromApi[] }) => {
                 if (controller.signal.aborted) return; // stale guard
                 setComments(data.result ?? []);
             })
@@ -90,7 +91,7 @@ const TaskCommentsPanel = ({ open, task, onOpenChange }: TaskCommentsPanelProps)
             }
 
             // POST returns { result: Comment } — the raw row, not wrapped in newTask.
-            setComments((prev) => [...prev, data.result as Comment]);
+            setComments((prev) => [...prev, data.result as CommentFromApi]);
         } catch (err) {
             setError(
                 err instanceof Error ? err.message : "Something went wrong while adding the comment."
@@ -119,7 +120,11 @@ const TaskCommentsPanel = ({ open, task, onOpenChange }: TaskCommentsPanelProps)
 
             // Replace matching comment in-place without a refetch.
             setComments((prev) =>
-                prev.map((c) => (c.id === commentId ? (data.result as Comment) : c))
+                prev.map((comment) =>
+                    comment.id === commentId
+                        ? (data.result as CommentFromApi)
+                        : comment
+                )
             );
         } catch (err) {
             setError(
