@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import type { Project, Task } from "@/db/schema";
+import type { TaskWithCommentSummary } from "@/features/tasks/types";
 
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,7 @@ const TasksPage = () => {
         defaultValues: emptyFormValues,
     });
 
-    const [tasks, setTasks] = useState<Task[]>([]);
+    const [tasks, setTasks] = useState<TaskWithCommentSummary[]>([]);
     const [taskCreated, setTaskCreated] = useState(false);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isCreating, setIsCreating] = useState(false);
@@ -62,6 +63,16 @@ const TasksPage = () => {
     const [isUpdatingProject, setIsUpdatingProject] = useState(false);
 
     const [commentPanelTask, setCommentPanelTask] = useState<Task | null>(null);
+
+    const handleCommentSummaryChange = (taskId: string, commentCount: number, latestComment: { id: string; content: string; createdAt: string } | null) => {
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task.id === taskId
+            ? { ...task, commentCount, latestComment }
+            : task
+        )
+      );
+    };
 
 
     const onSubmit: SubmitHandler<IFormInput> = async (data) => {
@@ -85,7 +96,7 @@ const TasksPage = () => {
             }
 
             createForm.reset();
-            setTasks((prev) => [...prev, result.newTask]);
+            setTasks((prev) => [...prev, { ...result.newTask, commentCount: 0, latestComment: null }]);
             setTaskCreated(true);
         } catch (error) {
             console.error("Failed to create task:", error);
@@ -193,7 +204,7 @@ const TasksPage = () => {
 
             setTasks((prev) =>
                 prev.map((task) =>
-                    task.id === updatedTask.id ? updatedTask : task
+                    task.id === updatedTask.id ? { ...updatedTask, commentCount: 0, latestComment: null } : task
                 )
             );
 
@@ -462,7 +473,6 @@ const TasksPage = () => {
                                     showSeparator={index < tasks.length - 1}
                                     onEdit={handleEditTask}
                                     onDelete={handleDeleteTask}
-                                    onViewComments={setCommentPanelTask}
                                 />
                             ))}
                         </div>

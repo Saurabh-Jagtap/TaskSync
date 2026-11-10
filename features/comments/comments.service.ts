@@ -1,7 +1,7 @@
 import { commentsTable, tasksTable } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { and, eq } from "drizzle-orm";
+import { and, eq, desc, count } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function createComment(taskId: string, content: string) {
@@ -40,28 +40,43 @@ export async function createComment(taskId: string, content: string) {
     return newComment;
 }
 
-export async function getCommentsByTaskId(taskId: string, userId: string) {
-    console.log("Fetching comments for taskId:", taskId, "for user:", userId);
-    const [task] = await db
-        .select()
-        .from(tasksTable)
-        .where(
-            and(
-                eq(tasksTable.userId, userId),
-                eq(tasksTable.id, taskId)
-            )
-        )
+export async function getCommentsByTaskId(
+  taskId: string,
+  userId: string,
+  { limit = 10, offset = 0 }: { limit?: number; offset?: number } = {}
+) {
+  console.log("Fetching comments for taskId:", taskId, "for user:", userId);
+  const [task] = await db
+    .select()
+    .from(tasksTable)
+    .where(
+      and(
+        eq(tasksTable.userId, userId),
+        eq(tasksTable.id, taskId)
+      )
+    );
 
-    if (!task) {
-        return null;
-    }
+  if (!task) {
+    return null;
+  }
 
-    const comments = await db
-        .select()
-        .from(commentsTable)
-        .where(eq(commentsTable.taskId, task.id));
+  const comments = await db
+    .select()
+    .from(commentsTable)
+    .where(eq(commentsTable.taskId, task.id))
+    .orderBy(desc(commentsTable.createdAt), desc(commentsTable.id))
+    .limit(limit)
+    .offset(offset);
 
-    return comments ?? null;
+  const [{ count: totalCount }] = await db
+    .select({ count: count() })
+    .from(commentsTable)
+    .where(eq(commentsTable.taskId, task.id));
+
+  return {
+    comments,
+    totalCount: Number(totalCount),
+  };
 }
 
 export async function deleteComment(commentId: string, userId: string) {

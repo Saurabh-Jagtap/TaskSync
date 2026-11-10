@@ -41,13 +41,25 @@ export async function GET(request: Request, ctx: RouteContext<'/api/tasks/[id]/c
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
-        const result = await getCommentsByTaskId(id, user.id);
+        const url = new URL(request.url);
+        const limit = Math.min(Math.max(Number(url.searchParams.get("limit") ?? "10"), 1), 50);
+        const offset = Math.max(Number(url.searchParams.get("offset") ?? "0"), 0);
+
+        const result = await getCommentsByTaskId(id, user.id, { limit, offset });
 
         if (!result) {
             return NextResponse.json({ error: "Task not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ result }, { status: 200 });
+        return NextResponse.json({
+            result: result.comments,
+            pagination: {
+                total: result.totalCount,
+                limit,
+                offset,
+                hasMore: offset + result.comments.length < result.totalCount,
+            },
+        }, { status: 200 });
     } catch (error) {
         console.error("Failed to fetch comments", error);
         return NextResponse.json({ error: "Unable to fetch comments" }, { status: 500 });

@@ -1,0 +1,1 @@
+CREATE INDEX "comments_task_created_idx" ON "comments" ("taskId","createdAt" desc,"id" desc);

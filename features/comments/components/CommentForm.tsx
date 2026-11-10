@@ -2,6 +2,7 @@
 import { LoaderCircle, MessageSquarePlus, Check } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { useEffect } from "react";
+import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,16 +30,14 @@ const CommentForm = ({
 }: CommentFormProps) => {
     const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentFormValues>({
         defaultValues: { content: defaultValue },
+        reValidate: "onChange",
+        mode: "onBlur",
     });
 
     // Sync defaultValue into the form when it changes (e.g. when editing different comments).
     useEffect(() => {
         reset({ content: defaultValue });
     }, [defaultValue, reset]);
-
-    const handleFormSubmit: SubmitHandler<CommentFormValues> = async (data) => {
-        await onSubmit(data.content.trim());
-    };
 
     const isEditMode = Boolean(onCancel);
 
@@ -48,11 +47,17 @@ const CommentForm = ({
                 placeholder={placeholder}
                 rows={isEditMode ? 3 : 2}
                 aria-invalid={Boolean(errors.content)}
+                maxLength={255}
+                disabled={isSubmitting}
                 className="resize-y border-border/90 bg-background shadow-none placeholder:text-muted-foreground/80 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20 dark:focus-visible:border-emerald-400 dark:focus-visible:ring-emerald-400/20"
                 {...register("content", {
                     required: "Comment cannot be empty",
                     validate: (v) =>
                         v.trim().length > 0 || "Comment cannot be empty",
+                        maxLength: 255,
+                        shouldValidate: "",
+                        validate: (value) =>
+                            value?.length > 255 ? "Comment cannot be longer than 255 characters" : value?.trim() ? "" : "Comment cannot be empty",
                 })}
             />
 

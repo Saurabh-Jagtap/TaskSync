@@ -1,5 +1,5 @@
-import { uuid, pgTable, varchar, timestamp } from "drizzle-orm/pg-core";
-import { defineRelations } from "drizzle-orm";
+import { index, uuid, pgTable, varchar, timestamp } from "drizzle-orm/pg-core";
+import { defineRelations, desc } from "drizzle-orm";
 
 export const usersTable = pgTable("users", {
   id: uuid().primaryKey().defaultRandom(),
@@ -45,7 +45,10 @@ export const commentsTable = pgTable("comments", {
   content: varchar({ length: 255 }).notNull(),
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp().defaultNow().notNull(),
-})
+}, (table) => ({
+  commentsTaskCreatedIdx: index("comments_task_created_idx")
+    .on(table.taskId, desc(table.createdAt), desc(table.id)),
+}))
 
 export type User = typeof usersTable.$inferSelect;
 export type NewUser = typeof usersTable.$inferInsert;

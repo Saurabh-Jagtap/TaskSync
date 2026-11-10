@@ -1,7 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth/session";
-import { createTask, getTasksByUserId } from "@/features/tasks/task.service";
+import { createTask, getTasksWithCommentSummary } from "@/features/tasks/task.service";
 
 export async function GET() {
     try {
@@ -14,7 +14,7 @@ export async function GET() {
             );
         }
 
-        const result = await getTasksByUserId(user.id);
+        const result = await getTasksWithCommentSummary(user.id);
 
         return NextResponse.json({ result }, { status: 200 });
     } catch (error) {
